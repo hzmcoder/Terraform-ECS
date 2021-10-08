@@ -1,5 +1,5 @@
 provider "alicloud" {
-  configuration_source = "terraform-provider-alicloud/examples/vpc"
+  configuration_source = "Terradorm-ECS"
 }
 
 resource "alicloud_vpc" "main" {
