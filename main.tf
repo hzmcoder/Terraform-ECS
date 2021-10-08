@@ -4,3 +4,13 @@ resource "alicloud_vpc" "main" {
   # VPC地址块
   cidr_block = "10.1.0.0/21"
 }
+resource "alicloud_vswitch" "main" {
+  # VPC ID
+  vpc_id            = alicloud_vpc.main.id
+  # 交换机地址块
+  cidr_block        = "10.1.0.0/24"
+  # 可用区
+  availability_zone = "cn-hangzhou-b"
+  # 资源依赖,会优先创建该依赖资源
+  depends_on = [alicloud_vpc.main]
+}
