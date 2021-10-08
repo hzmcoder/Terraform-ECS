@@ -1,41 +1,34 @@
-provider "alicloud" {}
-
-resource "alicloud_vpc" "vpc" {
-  name       = "tf_test_foo"
-  cidr_block = "172.16.0.0/12"
+provider "alicloud" {
+  configuration_source = "terraform-provider-alicloud/examples/vpc"
 }
 
-resource "alicloud_vswitch" "vsw" {
-  vpc_id            = alicloud_vpc.vpc.id
-  cidr_block        = "172.16.0.0/21"
-  availability_zone = "cn-beijing-b"
+resource "alicloud_vpc" "main" {
+  # VPC名称
+  name       = "alicloud"
+  # VPC地址块
+  cidr_block = "10.1.0.0/21"
 }
 
-resource "alicloud_security_group" "default" {
-  name = "default"
-  vpc_id = alicloud_vpc.vpc.id
+resource "alicloud_vswitch" "main" {
+  # VPC ID
+  vpc_id            = alicloud_vpc.main.id
+  # 交换机地址块
+  cidr_block        = "10.1.0.0/24"
+  # 可用区
+  availability_zone = "cn-hangzhou-b"
+  # 资源依赖,会优先创建该依赖资源
+  depends_on = [alicloud_vpc.main]
+}
+resource "alicloud_nat_gateway" "main" {
+  vpc_id        = alicloud_vpc.main.id
+  specification = "Small"
+  name          = "from-tf-example"
 }
 
-resource "alicloud_instance" "instance" {
-  # cn-beijing
-  availability_zone = "cn-beijing-b"
-  security_groups = alicloud_security_group.default.*.id
-  # series III
-  instance_type        = "ecs.n2.small"
-  system_disk_category = "cloud_efficiency"
-  image_id             = "ubuntu_18_04_64_20G_alibase_20190624.vhd"
-  instance_name        = "test_foo"
-  vswitch_id = alicloud_vswitch.vsw.id
-  internet_max_bandwidth_out = 10
+resource "alicloud_eip" "foo" {
 }
 
-resource "alicloud_security_group_rule" "allow_all_tcp" {
-  type              = "ingress"
-  ip_protocol       = "tcp"
-  nic_type          = "intranet"
-  policy            = "accept"
-  port_range        = "1/65535"
-  priority          = 1
-  security_group_id = alicloud_security_group.default.id
-  cidr_ip           = "0.0.0.0/0"
+resource "alicloud_eip_association" "foo" {
+  allocation_id = alicloud_eip.foo.id
+  instance_id   = alicloud_nat_gateway.main.id
 }
